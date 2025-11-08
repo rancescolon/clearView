@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "ClearView",
+  "version": "1.0",
+  "description": "Improves web accessibility for people with dyslexia, color blindness, visual or hearing impairments, and motor disabilities.",
+  "permissions": ["scripting", "activeTab", "storage"],
+  "web_accessible_resources": [
+    {
+      "resources": ["fonts/OpenDyslexic-Regular.woff"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
