@@ -1,0 +1,43 @@
+<!--frontend for the browser extension-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ClearView</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<h2>ClearView Accessibility</h2>
+
+<!-- Color Fixer -->
+<div>
+    <label>Color Scheme:</label>
+    <select id="colorScheme">
+        <option value="light">Light Mode</option>
+        <option value="dark">Dark Mode</option>
+    </select>
+</div>
+
+<!-- Text Options -->
+<div>
+    <label>Font:</label>
+    <select id="fontFamily">
+        <option value="Open Dyslexic">Open Dyslexic</option>
+        <option value="Arial">Arial</option>
+        <option value="Verdana">Verdana</option>
+    </select>
+    <label>Font Size:</label>
+    <input type="number" id="fontSize" min="12" max="36" value="18"> px
+</div>
+
+<!-- Voice / Screen Reader -->
+<div>
+    <button id="startVoice">Start Voice Navigation</button>
+    <button id="readPage">Read Page</button>
+    <button id="pauseReading">Pause</button>
+    <button id="resumeReading">Resume</button>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
