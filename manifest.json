@@ -3,7 +3,7 @@
   "name": "ClearView",
   "version": "1.0",
   "description": "Accessibility tool: fonts, spacing, italics, link visibility, and colors",
-  "permissions": ["scripting", "activeTab", "storage"],
+  "permissions": ["scripting", "activeTab", "storage", "microphone","audioCapture"],
   "action": {
     "default_popup": "popup/popup.html"
 

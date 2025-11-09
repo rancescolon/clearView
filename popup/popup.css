@@ -23,3 +23,19 @@ input[type="range"], select, input[type="color"] {
 input[type="checkbox"] {
     margin-right: 6px;
 }
+
+/* Add this to your popup.css file */
+.reset-btn {
+    width: 100%;
+    padding: 8px;
+    margin-top: 10px;
+    background-color: #e0e0e0;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.reset-btn:hover {
+    background-color: #d1d1d1;
+}
