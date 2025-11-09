@@ -1,12 +1,14 @@
 // === ClearView Voice Navigation Script ===
 
 
+
 (async function() {
     // Check for browser support
     window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!window.SpeechRecognition) {
         console.warn("Speech Recognition API is not supported in this browser. Voice control will not work.");
     }
+
 
 
     // === Singleton Voice Control ===
@@ -17,6 +19,7 @@
         isInitialized: false, // Track initialization
 
 
+
         // Reading state
         isReading: false,
         isPaused: false,
@@ -25,9 +28,11 @@
         currentWordIndex: 0,
 
 
+
         // === Initialization ===
         init: function () {
             if (!window.SpeechRecognition || this.isInitialized) return;
+
 
 
             // Set initial reading state from storage
@@ -36,10 +41,12 @@
             });
 
 
+
             this.recognition = new window.SpeechRecognition();
             this.recognition.continuous = true;
             this.recognition.interimResults = false;
             this.recognition.lang = "en-US";
+
 
 
             this.recognition.onresult = (event) => {
@@ -53,15 +60,18 @@
             };
 
 
+
             this.recognition.onend = () => {
                 if (this.listening) this.recognition.start();
             };
+
 
 
             this.screenReader = window.speechSynthesis;
             this.isInitialized = true; // Mark as initialized
             console.log("ClearView Voice Initialized");
         },
+
 
 
         start: function () {
@@ -72,6 +82,7 @@
             if (this.listening) return;
 
 
+
             this.listening = true;
             this.recognition.start();
             this.announce("Voice control is now on.");
@@ -80,12 +91,17 @@
 
 
 
+
+
+
         stop: function () {
             if (!this.isInitialized) return;
 
 
+
             this.listening = false;
             if (this.recognition) this.recognition.stop();
+
 
 
             // Also stop reading if it's in progress
@@ -94,16 +110,20 @@
             }
 
 
+
             if (this.screenReader && this.screenReader.speaking)
                 this.screenReader.cancel();
+
 
 
             if (this.readingTimeout)
                 clearTimeout(this.readingTimeout);
 
 
+
             this.announce("Voice control is now off.");
         },
+
 
 
         announce: function (message) {
@@ -113,9 +133,11 @@
         },
 
 
+
         // === Handle Commands ===
         handleCommand: function (transcript) {
             transcript = transcript.trim().toLowerCase();
+
 
 
             // Pause or Stop reading
@@ -126,11 +148,14 @@
             }
 
 
+
             const commands = this.commands();
+
 
 
             for (const cmd in commands) {
                 if (commands[cmd].some((phrase) => transcript.includes(phrase))) {
+
 
 
                     // Handle continueReading specially
@@ -146,10 +171,12 @@
                     }
 
 
+
                     return;
                 }
             }
         },
+
 
 
         // === Command Execution ===
@@ -160,9 +187,11 @@
                     break;
 
 
+
                 case "scrollUp":
                     window.scrollBy({ top: -window.innerHeight * 0.9, behavior: "smooth" });
                     break;
+
 
 
                 case "scrollTop":
@@ -170,9 +199,11 @@
                     break;
 
 
+
                 case "scrollBottom":
                     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
                     break;
+
 
 
                 case "zoomIn":
@@ -180,9 +211,11 @@
                     break;
 
 
+
                 case "zoomOut":
                     document.body.style.zoom = (parseFloat(document.body.style.zoom || 1) - 0.1).toString();
                     break;
+
 
 
                 case "reload":
@@ -190,14 +223,17 @@
                     break;
 
 
+
                 case "stopListening":
                     this.stop();
                     break;
 
 
+
                 case "readPage":
                     this.readPage();
                     break;
+
 
 
                 case "pauseReading":
@@ -209,9 +245,11 @@
                     break;
 
 
+
                 case "summarizePage":
                     this.announce("Summarizing page (placeholder)");
                     break;
+
 
 
                 case "playVideo":
@@ -219,9 +257,11 @@
                     break;
 
 
+
                 case "pauseVideo":
                     this.toggleVideo("pause");
                     break;
+
 
 
                 default:
@@ -230,12 +270,14 @@
         },
 
 
+
         // === Wrap words in spans ===
         wrapWords: function (element) {
             let words = element.innerText.trim().split(/\s+/);
             let html = words.map((w) => `<span class="clearview-word">${w}</span>`).join(" ");
             element.innerHTML = html;
         },
+
 
 
         clearWordHighlights: function () {
@@ -248,9 +290,11 @@
         },
 
 
+
         highlightWord: function (index) {
             let wordSpans = document.querySelectorAll(".clearview-word");
             if (index < 0 || index >= wordSpans.length) return;
+
 
 
             this.clearWordHighlights();
@@ -260,9 +304,11 @@
             wordSpans[index].style.transition = "transform 0.1s ease-in"; // Smooth transition
 
 
+
             // Auto-scroll into view
             wordSpans[index].scrollIntoView({ behavior: "smooth", block: "center" });
         },
+
 
 
         // === Read Page ===
@@ -273,10 +319,12 @@
             ).filter((el) => el.offsetParent !== null && el.innerText.trim().length > 0);
 
 
+
             if (elements.length === 0) {
                 this.announce("No readable content found on this page");
                 return;
             }
+
 
 
             // Set reading state
@@ -285,9 +333,11 @@
             chrome.storage.local.set({ isReading: true });
 
 
+
             // Reset reading state
             this.words = [];
             this.currentWordIndex = 0;
+
 
 
             // Wrap words and build list
@@ -299,6 +349,7 @@
             });
 
 
+
             if (this.words.length === 0) {
                 this.announce("Nothing to read.");
                 this.isReading = false; // Reset state
@@ -307,8 +358,10 @@
             }
 
 
+
             this.readWordByWord();
         },
+
 
 
         // === Word-by-word Reading ===
@@ -322,6 +375,7 @@
             }
 
 
+
             const chunkSize = 75; // ~30 seconds of reading
             const chunkWords = this.words.slice(
                 this.currentWordIndex,
@@ -330,9 +384,11 @@
             const chunkText = chunkWords.join(" ");
 
 
+
             // Precompute word positions
             let positions = [];
             let offset = 0;
+
 
 
             for (let w of chunkWords) {
@@ -343,8 +399,10 @@
             }
 
 
+
             const utter = new SpeechSynthesisUtterance(chunkText);
             utter.rate = 1.0;
+
 
 
             // Correct word highlight
@@ -361,6 +419,7 @@
             };
 
 
+
             utter.onend = () => {
                 if (this.isPaused || !this.isReading) {
                     this.isReading = false;
@@ -370,7 +429,9 @@
                 }
 
 
+
                 this.currentWordIndex += chunkSize;
+
 
 
                 // Check if there are more words
@@ -389,8 +450,10 @@
             };
 
 
+
             this.screenReader.speak(utter);
         },
+
 
 
         // === Video Controls ===
@@ -399,6 +462,7 @@
                 action === "play" ? v.play() : v.pause()
             );
         },
+
 
 
         // === Command List ===
@@ -414,9 +478,11 @@
                 stopListening: ["stop listening", "turn off voice"],
 
 
+
                 readPage: ["read page", "start reading"],
                 pauseReading: ["pause reading", "stop reading"],
                 continueReading: ["continue reading", "resume reading"],
+
 
 
                 summarizePage: ["summarize page", "give summary"],
@@ -429,7 +495,10 @@
 
 
 
+
+
     // --- This is the execution logic ---
+
 
 
     // === Initial Load ===
@@ -438,10 +507,13 @@
     let isExtensionEnabled = settings.extensionEnabled !== false; // Default ON
 
 
+
     if (isExtensionEnabled) {
         window.ClearViewVoice.init();
         //window.ClearViewVoice.start(); // <-- Start listening immediately
+        //window.ClearViewVoice.start(); // <-- Start listening immediately
     }
+
 
 
     // === Message Listener ===
@@ -462,12 +534,14 @@
         }
 
 
+
         // --- Voice Commands ---
         // If extension is off, ignore all voice commands
         if (!isExtensionEnabled) {
             sendResponse({ status: "Extension is disabled" });
             return true;
         }
+
 
 
         if (message.action === "VOICE_START") {
@@ -487,9 +561,11 @@
         }
 
 
+
         // Need to return true for async sendResponse
         return true;
     });
+
 
 
 })();
