@@ -1,42 +1,81 @@
-body {
-    font-family: Arial, sans-serif;
-    width: 250px;
-    padding: 10px;
-    background: #f5f5f5;
-}
-
-h2, h3 {
-    text-align: center;
-    font-size: 16px;
-}
-
-label {
-    display: block;
-    margin: 8px 0 4px;
-}
-
-input[type="range"], select, input[type="color"] {
-    width: 100%;
-    margin-bottom: 8px;
-}
-
-input[type="checkbox"] {
-    margin-right: 6px;
-}
-
-/* Add this to your popup.css file */
-.reset-btn {
-    width: 100%;
-    padding: 8px;
-    margin-top: 10px;
-    background-color: #e0e0e0;
-    border: 1px solid #c0c0c0;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-}
+/* ... [your existing styles] ... */
 
 .reset-btn:hover {
     background-color: #d1d1d1;
 }
 
+/* === NEW VOICE BUTTON STYLES === */
+h3 {
+    margin-bottom: 8px;
+    margin-top: 16px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 4px;
+}
+
+.voice-btn-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.voice-btn {
+    flex-grow: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: #e0e0e0;
+    border: 1px solid #c0c0c0;
+    width: 100%;
+    margin-top: 4px;
+}
+
+.voice-btn:hover {
+    background-color: #d1d1d1;
+}
+
+.voice-btn.start {
+    background-color: #c8e6c9; /* Greenish */
+    border-color: #a5d6a7;
+}
+.voice-btn.start:hover {
+    background-color: #b9e0ba;
+}
+
+.voice-btn.stop {
+    background-color: #ffcdd2; /* Reddish */
+    border-color: #ef9a9a;
+}
+.voice-btn.stop:hover {
+    background-color: #ffbaba;
+}
+
+.voice-btn.read-page {
+    background-color: #bbdefb; /* Bluish */
+    border-color: #90caf9;
+    margin-bottom: 10px;
+}
+.voice-btn.read-page:hover {
+    background-color: #a8d4fa;
+}
+
+/* ... [your existing styles] ... */
+
+.voice-btn.read-page {
+    background-color: #bbdefb; /* Bluish */
+    border-color: #90caf9;
+    margin-bottom: 10px;
+}
+.voice-btn.read-page:hover {
+    background-color: #a8d4fa;
+}
+
+/* NEW: Style for when the button is in the "reading" state */
+.voice-btn.read-page.reading {
+    background-color: #ffcdd2; /* Reddish */
+    border-color: #ef9a9a;
+}
+.voice-btn.read-page.reading:hover {
+    background-color: #ffbaba;
+}

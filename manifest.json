@@ -6,12 +6,11 @@
   "permissions": ["scripting", "activeTab", "storage", "microphone","audioCapture"],
   "action": {
     "default_popup": "popup/popup.html"
-
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["scripts/text-formatter.js"],
+      "js": ["scripts/text-formatter.js", "scripts/voice-control.js"],
       "run_at": "document_idle"
     }
   ],
@@ -22,5 +21,4 @@
       "matches": ["<all_urls>"]
     }
   ]
-
 }
