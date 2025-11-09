@@ -1,3 +1,12 @@
+function debounce(func, delay = 150) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => func(...args), delay);
+    };
+}
+
+
 document.addEventListener("DOMContentLoaded", async () => {
     const controls = {
         font: document.getElementById("fontSelect"),
@@ -9,7 +18,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         letterSpacing: document.getElementById("letterSpacing"),
     };
 
-    // Load saved settings
     const saved = await chrome.storage.sync.get();
     for (const key in controls) {
         if (saved[key] !== undefined) {
@@ -18,18 +26,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    // Apply immediately
     applySettings();
 
-    const debouncedApply = debounce(() => {
-        saveSettings();
-        applySettings();
-    }, 150); // 150ms delay
+    // Example for debounced popup.js (already works with this content.js):
+    const debouncedSave = debounce(() => {
+        const options = {
+            font: fontSelect.value,
+            removeItalics: removeItalics.checked,
+            linkSize: linkSize.value,
+            linkColor: linkColor.value,
+            linkHoverColor: linkHoverColor.value,
+            lineSpacing: lineSpacing.value,
+            letterSpacing: letterSpacing.value
+        };
+        chrome.storage.sync.set(options);
+    }, 150);
 
-    // Listen to changes on all controls
-    for (const key in controls) {
-        controls[key].addEventListener("input", debouncedApply);
-    }
+
 
     async function saveSettings() {
         const data = {};
@@ -59,13 +72,3 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 });
-
-
-// Debounce helper
-function debounce(func, delay = 200) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => func(...args), delay);
-    };
-}
