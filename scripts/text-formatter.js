@@ -44,18 +44,19 @@
         letter-spacing: var(--cv-letter-spacing) !important;
       }
       
-      html.clearview-enabled body div, 
-      html.clearview-enabled body section, 
-      html.clearview-enabled body main, 
-      html.clearview-enabled body article, 
-      html.clearview-enabled body aside, 
-      html.clearview-enabled body header, 
-      html.clearview-enabled body footer, 
-      html.clearview-enabled body nav, 
+      /* Only target text-holding elements, not structural containers */
       html.clearview-enabled body p, 
       html.clearview-enabled body li, 
-      html.clearview-enabled body span {
-         background-color: transparent !important;
+      html.clearview-enabled body span,
+      html.clearview-enabled body b,
+      html.clearview-enabled body i,
+      html.clearview-enabled body strong,
+      html.clearview-enabled body em,
+      html.clearview-enabled body blockquote,
+      html.clearview-enabled body code,
+      html.clearview-enabled body pre,
+      html.clearview-enabled body td,
+      html.clearview-enabled body th {
          font-size: var(--cv-text-size) !important;
          color: var(--cv-text-color) !important;
       }
@@ -122,8 +123,20 @@
         const root = document.documentElement;
         if (!opts) return;
 
-        const fontName = opts.font === "OpenDyslexic" ? "'OpenDyslexic', Arial, sans-serif" : (opts.font || "Arial, sans-serif");
-        root.style.setProperty("--cv-font", fontName);
+        // Determine font family string with fallbacks
+        let fontName = opts.font;
+        let fontCSS = "";
+
+        if (fontName === "OpenDyslexic") {
+            fontCSS = "'OpenDyslexic', Arial, sans-serif";
+        } else if (fontName === "Times New Roman" || fontName === "Georgia") {
+            fontCSS = `'${fontName}', serif`;
+        } else {
+            // Arial, Verdana, Tahoma, Courier New, and any new sans-serif/monospace font
+            fontCSS = `'${fontName}', sans-serif`;
+        }
+
+        root.style.setProperty("--cv-font", fontCSS);
         root.style.setProperty("--cv-remove-italics", opts.removeItalics ? "normal" : "inherit");
         root.style.setProperty("--cv-text-size", (opts.textSize || 1.0) + "em");
         root.style.setProperty("--cv-text-color", opts.textColor || "inherit");

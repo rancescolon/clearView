@@ -37,7 +37,7 @@ const sensitivityValue = document.getElementById("sensitivityValue");
 
 // Object to hold all default values
 const DEFAULT_SETTINGS = {
-    font: "OpenDyslexic",
+    font: "Arial",
     removeItalics: false,
     textSize: 1.0,
     textColor: "#333333",
