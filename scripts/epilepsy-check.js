@@ -8,7 +8,7 @@
 
     // --- Configuration ---
     let flashTimestamps = [];
-    let FLASH_THRESHOLD_COUNT = 5; // Default: 5 flashes
+    let FLASH_THRESHOLD_COUNT = 5; // Default: 5 flashes (set from storage)
     const FLASH_THRESHOLD_TIME = 1000; // ...in 1 second
 
     let isWarningActive = false;
@@ -99,40 +99,35 @@
     }
 
     /**
-     * Records potential flash events.
+     * Records a "flash event".
      */
-    function recordFlash(count = 1) {
+    function recordFlash() {
         if (isWarningActive || !isCheckEnabled) return;
 
         const now = Date.now();
-        // Add one timestamp for each change detected
-        for (let i = 0; i < count; i++) {
-            flashTimestamps.push(now);
-        }
+        flashTimestamps.push(now);
 
         // Prune old timestamps
         flashTimestamps = flashTimestamps.filter(timestamp => now - timestamp < FLASH_THRESHOLD_TIME);
 
         // Check threshold
         if (flashTimestamps.length >= FLASH_THRESHOLD_COUNT) {
-            console.warn(`ClearView: Rapid flashing detected! (${flashTimestamps.length} changes). Triggering warning.`);
+            console.warn(`ClearView: Rapid flashing detected! (${flashTimestamps.length} events). Triggering warning.`);
             showWarning();
         }
     }
 
     /**
-     * The MutationObserver callback. Counts all relevant changes.
+     * The MutationObserver callback.
+     * *** THIS IS THE FIX ***
+     * We no longer count every single mutation. Instead, if *any*
+     * mutations happen in this batch, we count it as ONE "event".
+     * A normal page load (many changes at once) is 1 event.
+     * A real flash (many changes, then more changes) is 2+ events.
      */
     const observerCallback = (mutations) => {
-        let changeCount = 0;
-        for (const mutation of mutations) {
-            if (mutation.type === 'attributes') {
-                changeCount++;
-            }
-        }
-
-        if (changeCount > 0) {
-            recordFlash(changeCount);
+        if (mutations.length > 0) {
+            recordFlash(); // Just record 1 event, not mutations.length
         }
     };
 
