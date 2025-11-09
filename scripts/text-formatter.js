@@ -1,6 +1,12 @@
 (async function () {
     const openDyslexicURL = chrome.runtime.getURL("fonts/OpenDyslexic-Regular.woff");
 
+    // NEW: Define selectors for transparency and text sizing
+    // Headings are made transparent but are NOT resized.
+    const transparentSelectors = "body div, body section, body main, body article, body aside, body header, body footer, body nav, body p, body li, body span, h1, h2, h3, h4, h5, h6, a";
+    const textSizeSelectors = "body div, body section, body main, body article, body aside, body header, body footer, body nav, body p, body li, body span";
+
+
     // Insert style once (for CSS variables)
     let style = document.getElementById("clearview-style");
     if (!style) {
@@ -95,14 +101,106 @@
         root.style.setProperty("--cv-link-hover-color", opts.linkHoverColor || "#003399");
     }
 
+    // Progressive viewport-first styling
+    function styleViewportFirst(opts) {
+        document.documentElement.style.backgroundColor = opts.backgroundColor || "#FFFFFF";
+        document.body.style.backgroundColor = opts.backgroundColor || "#FFFFFF";
+
+        const allElements = Array.from(document.body.querySelectorAll("*"));
+
+        // MODIFIED: Get elements for specific styling
+        const transparentElements = Array.from(document.body.querySelectorAll(transparentSelectors));
+        const textSizeElements = Array.from(document.body.querySelectorAll(textSizeSelectors));
+
+        const viewportHeight = window.innerHeight;
+
+        const aboveFold = allElements.filter(el => {
+            const rect = el.getBoundingClientRect();
+            return rect.top < viewportHeight && rect.bottom > 0;
+        });
+        const belowFold = allElements.filter(el => !aboveFold.includes(el));
+
+        const fontName = opts.font === "OpenDyslexic" ? "'OpenDyslexic', Arial, sans-serif" : (opts.font || "Arial, sans-serif");
+
+        aboveFold.forEach(el => {
+            // Apply universal styles to all
+            el.style.fontFamily = fontName;
+            if (opts.removeItalics) el.style.fontStyle = "normal";
+            el.style.lineHeight = opts.lineSpacing || 1.4;
+            el.style.letterSpacing = (opts.letterSpacing || 0.05) + "em";
+
+            // Apply transparency and color to containers/headings
+            if (transparentElements.includes(el)) {
+                el.style.backgroundColor = "transparent";
+                el.style.color = opts.textColor || "inherit";
+            }
+
+            // Apply text size only to text containers
+            if (textSizeElements.includes(el)) {
+                el.style.fontSize = (opts.textSize || 1.0) + "em";
+            }
+
+            if (el.tagName === "A") {
+                el.style.fontSize = (opts.linkSize || 1.05) + "em";
+                el.style.fontWeight = "600";
+                el.style.color = opts.linkColor || "#0645AD";
+                el.style.textDecoration = "underline";
+                el.style.padding = "2px 4px";
+                el.style.borderRadius = "4px";
+                el.style.backgroundColor = "transparent";
+            }
+        });
+
+        let index = 0;
+        const chunkSize = 50;
+
+        function styleChunk() {
+            const chunk = belowFold.slice(index, index + chunkSize);
+            chunk.forEach(el => {
+                // Apply universal styles to all
+                el.style.fontFamily = fontName;
+                if (opts.removeItalics) el.style.fontStyle = "normal";
+                el.style.lineHeight = opts.lineSpacing || 1.4;
+                el.style.letterSpacing = (opts.letterSpacing || 0.05) + "em";
+
+                // Apply transparency and color to containers/headings
+                if (transparentElements.includes(el)) {
+                    el.style.backgroundColor = "transparent";
+                    el.style.color = opts.textColor || "inherit";
+                }
+
+                // Apply text size only to text containers
+                if (textSizeElements.includes(el)) {
+                    el.style.fontSize = (opts.textSize || 1.0) + "em";
+                }
+
+                if (el.tagName === "A") {
+                    el.style.fontSize = (opts.linkSize || 1.05) + "em";
+                    el.style.fontWeight = "600";
+                    el.style.color = opts.linkColor || "#0645AD";
+                    el.style.textDecoration = "underline";
+                    el.style.padding = "2px 4px";
+                    el.style.borderRadius = "4px";
+                    el.style.backgroundColor = "transparent";
+                }
+            });
+            index += chunkSize;
+            if (index < belowFold.length) requestAnimationFrame(styleChunk);
+        }
+
+        if (belowFold.length) requestAnimationFrame(styleChunk);
+    }
+
     // Load saved settings and apply
     const settings = await chrome.storage.sync.get();
     updateVariables(settings);
+    styleViewportFirst(settings);
 
     // Listen for live updates
     chrome.runtime.onMessage.addListener((message) => {
         if (message.action === "updateSettings") {
             updateVariables(message.settings);
+            styleViewportFirst(message.settings);
         }
     });
 })();
