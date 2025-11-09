@@ -3,18 +3,22 @@
   "name": "ClearView",
   "version": "1.0",
   "description": "Accessibility tool: fonts, spacing, italics, link visibility, and colors",
-  "permissions": ["scripting", "activeTab", "storage", "microphone","audioCapture"],
+  "permissions": ["scripting", "activeTab", "storage", "microphone", "audioCapture"],
   "action": {
     "default_popup": "popup/popup.html"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
+      "js": ["scripts/epilepsy-check.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["<all_urls>"],
       "js": ["scripts/text-formatter.js", "scripts/voice-control.js"],
       "run_at": "document_idle"
     }
   ],
-
   "web_accessible_resources": [
     {
       "resources": ["fonts/OpenDyslexic-Regular.woff"],

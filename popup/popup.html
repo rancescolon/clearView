@@ -22,6 +22,27 @@
         <div class="simple-keyboard">...</div>
     </div>
 
+    <h3>Safety</h3>
+    <label>
+        <input type="checkbox" id="epilepsyCheck"> Epilepsy Flash Protection
+    </label>
+
+    <label>
+        <input type="checkbox" id="disableAutoplay"> Disable Video Autoplay
+    </label>
+
+    <label>
+        <input type="checkbox" id="blueTint"> Apply Blue Tint Filter
+    </label>
+
+    <label for="sensitivity">Sensitivity (Flashes/sec):</label>
+    <input type="range" id="sensitivity" min="3" max="10" step="1" value="5">
+    <span id="sensitivityValue">5</span>
+    <small style="display: block; margin-top: -5px;">Page reload required to apply.</small>
+
+    <hr>
+
+
     <label for="fontSelect">Font:</label>
     <select id="fontSelect">
         <option value="OpenDyslexic">OpenDyslexic</option>

@@ -3,8 +3,6 @@
     let isEnabled = false;
 
     // --- Create and Inject the Stylesheet ---
-    // This runs once, immediately. The styles are inactive
-    // until the 'clearview-enabled' class is added to <html>.
     function insertStyleSheet() {
         let style = document.getElementById("clearview-style");
         if (style) return; // Already injected
@@ -98,6 +96,27 @@
         document.head.appendChild(style);
     }
 
+    // --- NEW: Function to manage the blue tint filter ---
+    function setBlueTint(enabled) {
+        let tintStyle = document.getElementById("clearview-blue-tint-style");
+        if (enabled) {
+            if (tintStyle) return; // Already on
+            tintStyle = document.createElement("style");
+            tintStyle.id = "clearview-blue-tint-style";
+            // This filter shifts reds to blues
+            tintStyle.textContent = `
+                html {
+                    filter: sepia(0.8) hue-rotate(180deg) saturate(2) !important;
+                }
+            `;
+            document.head.appendChild(tintStyle);
+        } else {
+            if (tintStyle) {
+                tintStyle.remove(); // Turn off
+            }
+        }
+    }
+
     // --- Apply CSS variables to root ---
     function updateVariables(opts) {
         const root = document.documentElement;
@@ -133,6 +152,9 @@
     const initialStatus = settings.extensionEnabled !== false; // Default ON
     setEnabled(initialStatus, settings);
 
+    // NEW: Set initial blue tint state
+    setBlueTint(settings.blueTint === true);
+
     // --- Listen for live updates ---
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === "updateSettings") {
@@ -146,6 +168,9 @@
                 const currentSettings = await chrome.storage.sync.get();
                 setEnabled(message.enabled, currentSettings);
             })();
+        } else if (message.action === "setBlueTint") {
+            // NEW: Listen for blue tint toggle
+            setBlueTint(message.enabled);
         }
     });
 })();

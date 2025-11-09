@@ -16,9 +16,16 @@ const startVoiceBtn = document.getElementById("startVoiceBtn");
 const stopVoiceBtn = document.getElementById("stopVoiceBtn");
 const readPageBtn = document.getElementById("readPageBtn");
 
-// NEW: Master Toggle elements
+// Master Toggle elements
 const toggleExtension = document.getElementById("toggleExtension");
 const allControls = document.getElementById("all-controls-wrapper");
+
+// Safety elements
+const epilepsyCheck = document.getElementById("epilepsyCheck");
+const disableAutoplay = document.getElementById("disableAutoplay");
+const blueTint = document.getElementById("blueTint");
+const sensitivity = document.getElementById("sensitivity");
+const sensitivityValue = document.getElementById("sensitivityValue");
 
 
 // Object to hold all default values
@@ -33,7 +40,13 @@ const DEFAULT_SETTINGS = {
     linkHoverColor: "#003399",
     lineSpacing: 1.4,
     letterSpacing: 0.05,
-    extensionEnabled: true // NEW: Default state is ON
+    // New Safety Defaults
+    epilepsyCheck: true,
+    disableAutoplay: true,
+    blueTint: false,
+    sensitivity: 5, // Corresponds to 5 flashes/sec
+    // Master Toggle
+    extensionEnabled: true
 };
 
 // Debounce helper
@@ -64,7 +77,6 @@ const applySettings = debounce(() => {
     chrome.storage.sync.set(options);
 
     // Send immediately to current tab for live updates
-    // This message is now received by text-formatter.js
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]) {
             chrome.tabs.sendMessage(tabs[0].id, { action: "updateSettings", settings: options });
@@ -84,12 +96,31 @@ function updatePopupUI(settings) {
     linkHoverColor.value = settings.linkHoverColor || DEFAULT_SETTINGS.linkHoverColor;
     lineSpacing.value = settings.lineSpacing || DEFAULT_SETTINGS.lineSpacing;
     letterSpacing.value = settings.letterSpacing || DEFAULT_SETTINGS.letterSpacing;
+
+    // Update Safety UI
+    epilepsyCheck.checked = settings.epilepsyCheck;
+    disableAutoplay.checked = settings.disableAutoplay;
+    blueTint.checked = settings.blueTint;
+    sensitivity.value = settings.sensitivity;
+    sensitivityValue.textContent = settings.sensitivity;
 }
 
 // New function to reset settings
 function resetSettings() {
     updatePopupUI(DEFAULT_SETTINGS); // Set UI to defaults
-    applySettings(); // Apply and save the defaults
+    applySettings(); // Apply and save the text defaults
+
+    // Explicitly save safety defaults
+    chrome.storage.sync.set({
+        epilepsyCheck: DEFAULT_SETTINGS.epilepsyCheck,
+        disableAutoplay: DEFAULT_SETTINGS.disableAutoplay,
+        blueTint: DEFAULT_SETTINGS.blueTint,
+        sensitivity: DEFAULT_SETTINGS.sensitivity
+    });
+
+    // Manually trigger safety messages
+    sendSafetyMessage("setEpilepsyCheck", DEFAULT_SETTINGS.epilepsyCheck);
+    sendSafetyMessage("setBlueTint", DEFAULT_SETTINGS.blueTint);
 }
 
 // Function to send voice commands to the content script
@@ -107,6 +138,19 @@ function sendVoiceCommand(action) {
     });
 }
 
+// NEW: Helper for sending safety messages
+function sendSafetyMessage(action, value) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+                action: action,
+                enabled: value
+            });
+        }
+    });
+}
+
+
 // Function to update the "Read Page" button state
 function updateReadButtonState(isReading) {
     if (isReading) {
@@ -123,6 +167,10 @@ function updateReadButtonState(isReading) {
 chrome.storage.sync.get().then((settings) => {
     // Merge loaded settings with defaults to ensure all keys exist
     const activeSettings = { ...DEFAULT_SETTINGS, ...settings };
+
+    // Handle new settings (default to true if not present)
+    activeSettings.epilepsyCheck = activeSettings.epilepsyCheck !== false;
+    activeSettings.disableAutoplay = activeSettings.disableAutoplay !== false;
 
     // Set the master toggle state
     toggleExtension.checked = activeSettings.extensionEnabled;
@@ -165,8 +213,40 @@ startVoiceBtn.addEventListener("click", () => sendVoiceCommand("VOICE_START"));
 stopVoiceBtn.addEventListener("click", () => sendVoiceCommand("VOICE_STOP"));
 readPageBtn.addEventListener("click", () => sendVoiceCommand("VOICE_TOGGLE_READING"));
 
+// --- NEW Safety Event Listeners ---
 
-// NEW: Master Toggle Event Listener
+epilepsyCheck.addEventListener("change", () => {
+    const isEnabled = epilepsyCheck.checked;
+    chrome.storage.sync.set({ epilepsyCheck: isEnabled });
+    sendSafetyMessage("setEpilepsyCheck", isEnabled);
+});
+
+disableAutoplay.addEventListener("change", () => {
+    const isEnabled = disableAutoplay.checked;
+    chrome.storage.sync.set({ disableAutoplay: isEnabled });
+    // Note: This setting is read by epilepsy-check.js on page load.
+    // We can also send a message for the current page, though it may be too late.
+    sendSafetyMessage("setDisableAutoplay", isEnabled);
+});
+
+blueTint.addEventListener("change", () => {
+    const isEnabled = blueTint.checked;
+    chrome.storage.sync.set({ blueTint: isEnabled });
+    // This message is handled by text-formatter.js
+    sendSafetyMessage("setBlueTint", isEnabled);
+});
+
+sensitivity.addEventListener("input", () => {
+    sensitivityValue.textContent = sensitivity.value;
+});
+
+sensitivity.addEventListener("change", () => {
+    // This just saves. The script reads this value on page load.
+    chrome.storage.sync.set({ sensitivity: parseInt(sensitivity.value, 10) });
+});
+
+
+// Master Toggle Event Listener
 toggleExtension.addEventListener("change", () => {
     const isEnabled = toggleExtension.checked;
     chrome.storage.sync.set({ extensionEnabled: isEnabled });
@@ -178,12 +258,5 @@ toggleExtension.addEventListener("change", () => {
     }
 
     // Tell content scripts to turn on/off
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-                action: "setExtensionEnabled",
-                enabled: isEnabled
-            });
-        }
-    });
+    sendSafetyMessage("setExtensionEnabled", isEnabled);
 });
