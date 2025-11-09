@@ -16,6 +16,10 @@ const startVoiceBtn = document.getElementById("startVoiceBtn");
 const stopVoiceBtn = document.getElementById("stopVoiceBtn");
 const readPageBtn = document.getElementById("readPageBtn");
 
+// NEW: Master Toggle elements
+const toggleExtension = document.getElementById("toggleExtension");
+const allControls = document.getElementById("all-controls-wrapper");
+
 
 // Object to hold all default values
 const DEFAULT_SETTINGS = {
@@ -28,7 +32,8 @@ const DEFAULT_SETTINGS = {
     linkColor: "#0645AD",
     linkHoverColor: "#003399",
     lineSpacing: 1.4,
-    letterSpacing: 0.05
+    letterSpacing: 0.05,
+    extensionEnabled: true // NEW: Default state is ON
 };
 
 // Debounce helper
@@ -59,12 +64,13 @@ const applySettings = debounce(() => {
     chrome.storage.sync.set(options);
 
     // Send immediately to current tab for live updates
+    // This message is now received by text-formatter.js
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]) {
             chrome.tabs.sendMessage(tabs[0].id, { action: "updateSettings", settings: options });
         }
     });
-}, 50); // small debounce for performance
+}, 50);
 
 // Function to update the popup UI from a settings object
 function updatePopupUI(settings) {
@@ -101,7 +107,7 @@ function sendVoiceCommand(action) {
     });
 }
 
-// NEW: Function to update the "Read Page" button state
+// Function to update the "Read Page" button state
 function updateReadButtonState(isReading) {
     if (isReading) {
         readPageBtn.textContent = "Stop Reading";
@@ -115,17 +121,26 @@ function updateReadButtonState(isReading) {
 
 // Initialize popup with saved settings
 chrome.storage.sync.get().then((settings) => {
-    // Check if settings are empty, if so, use defaults
-    const activeSettings = Object.keys(settings).length ? settings : DEFAULT_SETTINGS;
+    // Merge loaded settings with defaults to ensure all keys exist
+    const activeSettings = { ...DEFAULT_SETTINGS, ...settings };
+
+    // Set the master toggle state
+    toggleExtension.checked = activeSettings.extensionEnabled;
+    if (!activeSettings.extensionEnabled) {
+        allControls.classList.add("disabled");
+    }
+
+    // Update the rest of the UI
     updatePopupUI(activeSettings);
 });
 
-// NEW: Get the current reading state when popup opens
+
+// Get the current reading state when popup opens
 chrome.storage.local.get("isReading", (data) => {
     updateReadButtonState(data.isReading);
 });
 
-// NEW: Listen for live changes to reading state
+// Listen for live changes to reading state
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area === "local" && changes.isReading) {
         updateReadButtonState(changes.isReading.newValue);
@@ -141,13 +156,34 @@ textColor.addEventListener("input", applySettings);
 backgroundColor.addEventListener("input", applySettings);
 linkSize.addEventListener("input", applySettings);
 linkColor.addEventListener("input", applySettings);
-linkHoverColor.addEventListener("input", applySettings);
+lineSpacing.addEventListener("input", applySettings);
 letterSpacing.addEventListener("input", applySettings);
 resetButton.addEventListener("click", resetSettings);
 
 // Voice control event listeners
 startVoiceBtn.addEventListener("click", () => sendVoiceCommand("VOICE_START"));
 stopVoiceBtn.addEventListener("click", () => sendVoiceCommand("VOICE_STOP"));
-
-// UPDATED: "Read Page" button now toggles
 readPageBtn.addEventListener("click", () => sendVoiceCommand("VOICE_TOGGLE_READING"));
+
+
+// NEW: Master Toggle Event Listener
+toggleExtension.addEventListener("change", () => {
+    const isEnabled = toggleExtension.checked;
+    chrome.storage.sync.set({ extensionEnabled: isEnabled });
+
+    if (isEnabled) {
+        allControls.classList.remove("disabled");
+    } else {
+        allControls.classList.add("disabled");
+    }
+
+    // Tell content scripts to turn on/off
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+            chrome.tabs.sendMessage(tabs[0].id, {
+                action: "setExtensionEnabled",
+                enabled: isEnabled
+            });
+        }
+    });
+});

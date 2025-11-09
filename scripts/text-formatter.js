@@ -1,15 +1,14 @@
 (async function () {
     const openDyslexicURL = chrome.runtime.getURL("fonts/OpenDyslexic-Regular.woff");
+    let isEnabled = false;
 
-    // NEW: Define selectors for transparency and text sizing
-    // Headings are made transparent but are NOT resized.
-    const transparentSelectors = "body div, body section, body main, body article, body aside, body header, body footer, body nav, body p, body li, body span, h1, h2, h3, h4, h5, h6, a";
-    const textSizeSelectors = "body div, body section, body main, body article, body aside, body header, body footer, body nav, body p, body li, body span";
+    // --- Create and Inject the Stylesheet ---
+    // This runs once, immediately. The styles are inactive
+    // until the 'clearview-enabled' class is added to <html>.
+    function insertStyleSheet() {
+        let style = document.getElementById("clearview-style");
+        if (style) return; // Already injected
 
-
-    // Insert style once (for CSS variables)
-    let style = document.getElementById("clearview-style");
-    if (!style) {
         style = document.createElement("style");
         style.id = "clearview-style";
         style.textContent = `
@@ -20,6 +19,7 @@
         font-style: normal;
       }
 
+      /* CSS variables are always defined */
       :root {
         --cv-font: 'OpenDyslexic', Arial, sans-serif;
         --cv-remove-italics: normal;
@@ -33,32 +33,46 @@
         --cv-link-hover-color: #003399;
       }
 
-      html, body {
+      /* Styles are applied ONLY when .clearview-enabled is present */
+      html.clearview-enabled, 
+      html.clearview-enabled body {
         background-color: var(--cv-background-color) !important;
       }
 
-      /* MODIFIED: Universal styles (excluding size/color) */
-      * {
+      html.clearview-enabled * {
         font-family: var(--cv-font) !important;
         font-style: var(--cv-remove-italics) !important;
         line-height: var(--cv-line-height) !important;
         letter-spacing: var(--cv-letter-spacing) !important;
       }
       
-      /* MODIFIED: Apply size/color/bg only to text containers */
-      body div, body section, body main, body article, body aside, body header, body footer, body nav, body p, body li, body span {
+      html.clearview-enabled body div, 
+      html.clearview-enabled body section, 
+      html.clearview-enabled body main, 
+      html.clearview-enabled body article, 
+      html.clearview-enabled body aside, 
+      html.clearview-enabled body header, 
+      html.clearview-enabled body footer, 
+      html.clearview-enabled body nav, 
+      html.clearview-enabled body p, 
+      html.clearview-enabled body li, 
+      html.clearview-enabled body span {
          background-color: transparent !important;
          font-size: var(--cv-text-size) !important;
          color: var(--cv-text-color) !important;
       }
 
-      /* NEW: Apply color/bg to headings, but PRESERVE font-size */
-      h1, h2, h3, h4, h5, h6 {
+      html.clearview-enabled h1, 
+      html.clearview-enabled h2, 
+      html.clearview-enabled h3, 
+      html.clearview-enabled h4, 
+      html.clearview-enabled h5, 
+      html.clearview-enabled h6 {
          background-color: transparent !important;
          color: var(--cv-text-color) !important;
       }
 
-      a {
+      html.clearview-enabled a {
         font-size: var(--cv-link-size) !important;
         font-weight: 600 !important;
         color: var(--cv-link-color) !important;
@@ -68,14 +82,14 @@
         background-color: transparent !important;
       }
 
-      a:hover, a:focus {
+      html.clearview-enabled a:hover, 
+      html.clearview-enabled a:focus {
         background-color: #dbe9ff !important;
         color: var(--cv-link-hover-color) !important;
         outline: 2px solid #99c2ff !important;
       }
 
-      /* NEW: Universal focus style for keyboard navigation */
-      *:focus-visible:not(a) {
+      html.clearview-enabled *:focus-visible:not(a) {
         outline: 2px solid #005fcc !important;
         box-shadow: 0 0 5px #005fcc !important;
         border-radius: 2px !important;
@@ -84,11 +98,12 @@
         document.head.appendChild(style);
     }
 
-    // Apply CSS variables to root
+    // --- Apply CSS variables to root ---
     function updateVariables(opts) {
         const root = document.documentElement;
-        const fontName = opts.font === "OpenDyslexic" ? "'OpenDyslexic', Arial, sans-serif" : (opts.font || "Arial, sans-serif");
+        if (!opts) return;
 
+        const fontName = opts.font === "OpenDyslexic" ? "'OpenDyslexic', Arial, sans-serif" : (opts.font || "Arial, sans-serif");
         root.style.setProperty("--cv-font", fontName);
         root.style.setProperty("--cv-remove-italics", opts.removeItalics ? "normal" : "inherit");
         root.style.setProperty("--cv-text-size", (opts.textSize || 1.0) + "em");
@@ -101,106 +116,36 @@
         root.style.setProperty("--cv-link-hover-color", opts.linkHoverColor || "#003399");
     }
 
-    // Progressive viewport-first styling
-    function styleViewportFirst(opts) {
-        document.documentElement.style.backgroundColor = opts.backgroundColor || "#FFFFFF";
-        document.body.style.backgroundColor = opts.backgroundColor || "#FFFFFF";
-
-        const allElements = Array.from(document.body.querySelectorAll("*"));
-
-        // MODIFIED: Get elements for specific styling
-        const transparentElements = Array.from(document.body.querySelectorAll(transparentSelectors));
-        const textSizeElements = Array.from(document.body.querySelectorAll(textSizeSelectors));
-
-        const viewportHeight = window.innerHeight;
-
-        const aboveFold = allElements.filter(el => {
-            const rect = el.getBoundingClientRect();
-            return rect.top < viewportHeight && rect.bottom > 0;
-        });
-        const belowFold = allElements.filter(el => !aboveFold.includes(el));
-
-        const fontName = opts.font === "OpenDyslexic" ? "'OpenDyslexic', Arial, sans-serif" : (opts.font || "Arial, sans-serif");
-
-        aboveFold.forEach(el => {
-            // Apply universal styles to all
-            el.style.fontFamily = fontName;
-            if (opts.removeItalics) el.style.fontStyle = "normal";
-            el.style.lineHeight = opts.lineSpacing || 1.4;
-            el.style.letterSpacing = (opts.letterSpacing || 0.05) + "em";
-
-            // Apply transparency and color to containers/headings
-            if (transparentElements.includes(el)) {
-                el.style.backgroundColor = "transparent";
-                el.style.color = opts.textColor || "inherit";
-            }
-
-            // Apply text size only to text containers
-            if (textSizeElements.includes(el)) {
-                el.style.fontSize = (opts.textSize || 1.0) + "em";
-            }
-
-            if (el.tagName === "A") {
-                el.style.fontSize = (opts.linkSize || 1.05) + "em";
-                el.style.fontWeight = "600";
-                el.style.color = opts.linkColor || "#0645AD";
-                el.style.textDecoration = "underline";
-                el.style.padding = "2px 4px";
-                el.style.borderRadius = "4px";
-                el.style.backgroundColor = "transparent";
-            }
-        });
-
-        let index = 0;
-        const chunkSize = 50;
-
-        function styleChunk() {
-            const chunk = belowFold.slice(index, index + chunkSize);
-            chunk.forEach(el => {
-                // Apply universal styles to all
-                el.style.fontFamily = fontName;
-                if (opts.removeItalics) el.style.fontStyle = "normal";
-                el.style.lineHeight = opts.lineSpacing || 1.4;
-                el.style.letterSpacing = (opts.letterSpacing || 0.05) + "em";
-
-                // Apply transparency and color to containers/headings
-                if (transparentElements.includes(el)) {
-                    el.style.backgroundColor = "transparent";
-                    el.style.color = opts.textColor || "inherit";
-                }
-
-                // Apply text size only to text containers
-                if (textSizeElements.includes(el)) {
-                    el.style.fontSize = (opts.textSize || 1.0) + "em";
-                }
-
-                if (el.tagName === "A") {
-                    el.style.fontSize = (opts.linkSize || 1.05) + "em";
-                    el.style.fontWeight = "600";
-                    el.style.color = opts.linkColor || "#0645AD";
-                    el.style.textDecoration = "underline";
-                    el.style.padding = "2px 4px";
-                    el.style.borderRadius = "4px";
-                    el.style.backgroundColor = "transparent";
-                }
-            });
-            index += chunkSize;
-            if (index < belowFold.length) requestAnimationFrame(styleChunk);
+    // --- Enable or Disable Styling ---
+    function setEnabled(newStatus, settings) {
+        isEnabled = newStatus;
+        if (isEnabled) {
+            document.documentElement.classList.add("clearview-enabled");
+            updateVariables(settings); // Apply current settings
+        } else {
+            document.documentElement.classList.remove("clearview-enabled");
         }
-
-        if (belowFold.length) requestAnimationFrame(styleChunk);
     }
 
-    // Load saved settings and apply
+    // --- Initial Load ---
+    insertStyleSheet();
     const settings = await chrome.storage.sync.get();
-    updateVariables(settings);
-    styleViewportFirst(settings);
+    const initialStatus = settings.extensionEnabled !== false; // Default ON
+    setEnabled(initialStatus, settings);
 
-    // Listen for live updates
-    chrome.runtime.onMessage.addListener((message) => {
+    // --- Listen for live updates ---
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === "updateSettings") {
-            updateVariables(message.settings);
-            styleViewportFirst(message.settings);
+            // Only apply if enabled
+            if (isEnabled) {
+                updateVariables(message.settings);
+            }
+        } else if (message.action === "setExtensionEnabled") {
+            // This is the message from the master toggle
+            (async () => {
+                const currentSettings = await chrome.storage.sync.get();
+                setEnabled(message.enabled, currentSettings);
+            })();
         }
     });
 })();

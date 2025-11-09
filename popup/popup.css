@@ -79,3 +79,63 @@ h3 {
 .voice-btn.read-page.reading:hover {
     background-color: #ffbaba;
 }
+
+/* ... [your existing styles] ... */
+
+/* === NEW MASTER TOGGLE STYLES === */
+.toggle-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e0e0e0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.switch-label {
+    font-weight: bold;
+    margin: 0;
+    font-size: 14px;
+}
+.switch-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px; /* smaller */
+    height: 24px; /* smaller */
+    margin: 0;
+}
+.switch-toggle input { display: none; }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px; /* smaller */
+    width: 16px; /* smaller */
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+input:checked + .slider {
+    background-color: #2196F3;
+}
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+.slider.round { border-radius: 24px; }
+.slider.round:before { border-radius: 50%; }
+
+/* Style for the disabled controls */
+#all-controls-wrapper.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
