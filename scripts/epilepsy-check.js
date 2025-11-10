@@ -68,18 +68,70 @@
         `;
 
         modal.innerHTML = `
-            <h2 style="color: #f00; margin-top: 0; font-size: 1.5em;">⚠️ Epilepsy Warning</h2>
-            <p style="font-size: 1.1em; line-height: 1.5; color: #eee;">
-                This page appears to contain rapidly flashing content.
-            </p>
-            <p style="font-size: 0.9em; color: #ccc;">
-                Detected ${flashTimestamps.length} rapid changes in the last second.
-            </p>
-            <div style="margin-top: 25px;">
-                <button id="cv-epilepsy-proceed" style="background-color: #4CAF50; color: white; padding: 12px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin: 5px;">Proceed Anyway</button>
-                <button id="cv-epilepsy-back" style="background-color: #f44336; color: white; padding: 12px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; margin: 5px;">Go Back</button>
-            </div>
-        `;
+  <div style="
+    background-color: #1a1a1a; /* Dark background */
+    color: #ffffff; /* All text set to white by default */
+    padding: 35px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 480px;
+    margin: auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); /* Reduced and simpler shadow */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    border: none; /* Removed border */
+  ">
+    <h2 style="
+      margin-top: 0;
+      font-size: 2em;
+      font-weight: 700;
+      color: #ffda47; /* Yellow for the warning icon, stands out */
+      text-shadow: none; /* Removed text shadow */
+      margin-bottom: 20px;
+    ">
+      ⚠️ Epilepsy Warning
+    </h2>
+    <p style="
+      font-size: 1.25em;
+      line-height: 1.5;
+      margin: 25px 0;
+      color: #ffffff; /* Explicitly white for main warning text */
+    ">
+      This page appears to contain <span style="font-weight: bold; color: #ffffff;">rapidly flashing content</span>.
+    </p>
+    <p style="
+      font-size: 1.05em;
+      margin-bottom: 30px;
+      color: #e0e0e0; /* Slightly off-white for secondary text */
+      font-style: italic;
+    ">
+      Detected <strong style="color: white">${flashTimestamps.length}</strong> rapid changes in the last second.
+    </p>
+    <div style="margin-top: 30px; display: flex; justify-content: center; gap: 15px;">
+      <button id="cv-epilepsy-proceed" style="
+        background-color: #4CAF50; /* Green for proceed */
+        color: white;
+        padding: 14px 25px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.1em;
+        font-weight: 600;
+        transition: background-color 0.3s ease, transform 0.1s;
+      " onmouseover="this.style.backgroundColor='#6bc56e'" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">Proceed Anyway</button>
+      <button id="cv-epilepsy-back" style="
+        background-color: #f44336; /* Red for go back */
+        color: white;
+        padding: 14px 25px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1.1em;
+        font-weight: 600;
+        transition: background-color 0.3s ease, transform 0.1s;
+      " onmouseover="this.style.backgroundColor='#ff6a5e'" onmousedown="this.style.transform='scale(0.98)'" onmouseup="this.style.transform='scale(1)'">Go Back</button>
+    </div>
+  </div>
+`;
 
         overlay.appendChild(modal);
 
